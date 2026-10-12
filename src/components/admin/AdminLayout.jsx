@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
-import { NavLink, Link, Outlet, useNavigate } from 'react-router-dom';
+import { NavLink, Outlet, useNavigate } from 'react-router-dom';
 import { useAdminAuth } from '../../context/AdminAuthContext';
+import { STOREFRONT_URL } from '../../utils/storefront';
 import {
   LayoutDashboard,
   Package,
@@ -98,8 +99,8 @@ export default function AdminLayout() {
           <p className="px-3 pb-2 text-[10px] font-extrabold uppercase tracking-widest text-slate-400">
             Storefront
           </p>
-          <Link
-            to="/"
+          <a
+            href={STOREFRONT_URL}
             target="_blank"
             rel="noreferrer"
             className="flex items-center justify-between px-3.5 py-2.5 rounded-xl text-xs font-bold text-slate-400 hover:text-slate-100 hover:bg-slate-800/80 transition"
@@ -109,7 +110,7 @@ export default function AdminLayout() {
               <span>Customer Store</span>
             </div>
             <ExternalLink className="h-3.5 w-3.5 text-slate-500" />
-          </Link>
+          </a>
         </div>
       </div>
 

@@ -7,8 +7,10 @@
     "dev": "vite",
     "server": "node server.js",
     "build": "vite build",
+    "build:admin": "vite build --config vite.admin.config.js",
     "lint": "eslint .",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "preview:admin": "vite preview --config vite.admin.config.js"
   },
   "dependencies": {
     "@google/genai": "^2.28.0",
