@@ -451,8 +451,26 @@ export async function handleChatRequest(payload, options = {}) {
     const replyText = (typeof geminiResponse.text === 'string' ? geminiResponse.text : '').trim();
 
     if (!replyText) {
-      throw new Error('Gemini returned an empty response.');
+      // Safe diagnostics: response metadata only — never prompts, keys, or payloads.
+      const candidate = geminiResponse && Array.isArray(geminiResponse.candidates)
+        ? geminiResponse.candidates[0]
+        : undefined;
+      const finishReason = (candidate && candidate.finishReason) || geminiResponse.finishReason || 'unknown';
+      const blockReason = (geminiResponse.promptFeedback && geminiResponse.promptFeedback.blockReason) || 'none';
+      console.warn('[1TAP Chatbot] Gemini returned no usable text:', {
+        model: configuredModel,
+        finishReason,
+        blockReason,
+      });
+      throw new Error(`Gemini returned an empty response (finishReason: ${finishReason}).`);
     }
+
+    // Safe diagnostics: metadata only (model + reply size, never content or keys).
+    console.info('[1TAP Chatbot] Gemini reply ok:', {
+      model: configuredModel,
+      replyChars: replyText.length,
+      groundedProducts: relevantProducts.length,
+    });
 
     // Strict Grounding Rule: If user specifically searched for a product and 0 products matched in the real catalog,
     // verify the response clearly conveys that no match was found.

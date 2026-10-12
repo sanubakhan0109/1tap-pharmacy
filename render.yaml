@@ -1,0 +1,15 @@
+services:
+  # 1TAP Pharmacy storefront (React + Vite SPA) on Render's static CDN.
+  # The rewrite below is the SPA fallback: any request path that does not match
+  # a real file in dist/ is served /index.html (URL unchanged) so BrowserRouter
+  # can render the route client-side. Without it, deep links and refreshes on
+  # client routes (e.g. /products, /products/:id) return a platform 404.
+  - type: web
+    name: onetap-pharmacy-1
+    runtime: static
+    buildCommand: npm ci && npm run build
+    staticPublishPath: dist
+    routes:
+      - type: rewrite
+        source: /*
+        destination: /index.html

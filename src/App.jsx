@@ -1,5 +1,5 @@
 import React from 'react';
-import { Routes, Route, Outlet } from 'react-router-dom';
+import { Routes, Route, Navigate, Outlet } from 'react-router-dom';
 import Navbar from './components/Navbar';
 import Footer from './components/Footer';
 import Toast from './components/Toast';
@@ -89,6 +89,11 @@ export default function App() {
                   <Route path="/orders" element={<CustomerOrders />} />
                   <Route path="/orders/:id" element={<CustomerOrderTracking />} />
                 </Route>
+
+                {/* Static-host alias: some hosts/CDNs normalize or link to /index.html.
+                    Without this, BrowserRouter sees pathname "/index.html" which matches
+                    no route below, so the "*" catch-all renders the 404 page. */}
+                <Route path="/index.html" element={<Navigate to="/" replace />} />
 
                 {/* 404 Catch-All — any invalid URL renders inside CustomerLayout (shared Navbar/Footer) */}
                 <Route path="*" element={<NotFound />} />

@@ -58,6 +58,30 @@ const PORT = process.env.PORT || 5000;
 // Middleware
 app.use(express.json({ limit: '1mb' }));
 
+// Minimal CORS for API routes (no extra dependency).
+// The deployed static frontend calls this backend cross-origin, so browsers
+// send an OPTIONS preflight for POST /api/chat. Without these headers the
+// browser blocks the response even though the backend itself would succeed.
+// Allowed origins are configurable via FRONTEND_ORIGINS (comma-separated).
+const FRONTEND_ORIGINS = (process.env.FRONTEND_ORIGINS ||
+  'https://onetap-pharmacy-1.onrender.com,http://localhost:5173,http://localhost:5174')
+  .split(',')
+  .map((s) => s.trim().replace(/\/+$/, ''))
+  .filter(Boolean);
+
+app.use('/api', (req, res, next) => {
+  const origin = req.headers.origin;
+  if (origin && FRONTEND_ORIGINS.includes(origin)) {
+    res.setHeader('Access-Control-Allow-Origin', origin);
+    res.setHeader('Vary', 'Origin');
+  }
+  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+  res.setHeader('Access-Control-Max-Age', '86400');
+  if (req.method === 'OPTIONS') return res.sendStatus(204);
+  next();
+});
+
 // Health Check Endpoint
 app.get('/api/health', (req, res) => {
   const geminiStatus = isGeminiConfigured();
@@ -143,6 +167,26 @@ app.use((req, res, next) => {
   res.sendFile(path.join(distPath, 'index.html'), (err) => {
     if (err) res.status(404).send('1TAP Pharmacy Server running. Frontend not built.');
   });
+});
+
+// JSON body-parse error handler (must be last, after all routes).
+// Without this, a malformed JSON body (e.g. from a manual curl probe with bad
+// quoting, or a non-app client) falls through to Express's default HTML
+// "Bad Request" page, which API clients cannot parse. This returns a clean
+// JSON 400 instead. Safe: logs status/type only — never the raw body.
+app.use((err, req, res, next) => {
+  if (err && (err.type === 'entity.parse.failed' || err.statusCode === 400) && req.path.startsWith('/api')) {
+    console.warn('[1TAP Server] Rejected malformed JSON body:', {
+      path: req.path,
+      statusCode: 400,
+      type: err.type || 'parse.failed',
+    });
+    return res.status(400).json({
+      success: false,
+      error: 'Invalid JSON request body. Send valid JSON with Content-Type: application/json.',
+    });
+  }
+  return next(err);
 });
 
 app.listen(PORT, () => {
